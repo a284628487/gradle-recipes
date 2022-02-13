@@ -15,4 +15,12 @@
  */
 package com.example
 
-class ExampleClass
+class ExampleClass {}
+
+object StaticObject {
+
+    fun hello(): Int {
+        Thread.sleep(1000)
+        return 3
+    }
+}

@@ -18,6 +18,8 @@ package com.android.build.example.minimal
 import android.app.Activity
 import android.os.Bundle
 import android.widget.TextView
+import com.example.StaticObject
+import com.example.library.Libs
 
 class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,5 +27,7 @@ class MainActivity : Activity() {
         val label = TextView(this)
         label.setText("Hello world!")
         setContentView(label)
+        StaticObject.hello()
+        Libs.hello()
     }
 }

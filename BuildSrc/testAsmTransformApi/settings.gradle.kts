@@ -1,3 +1,4 @@
+include(":library")
 
 include(":app")
 
