@@ -20,6 +20,13 @@ import java.io.File
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.artifact.SingleArtifact
+import org.gradle.api.Action
+import org.gradle.api.DefaultTask
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Nested
+
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.tasks.TaskAction
 
 abstract class ExamplePlugin: Plugin<Project> {
 
@@ -38,6 +45,7 @@ abstract class ExamplePlugin: Plugin<Project> {
         androidComponents.onVariants { variant ->
             // get the associated DSL BuildType element from the variant name
             val buildTypeDsl = android.buildTypes.getByName(variant.name)
+            println("buildType: ${variant.name}") // debug | release
             // find the extension on that DSL element.
             val buildTypeExtension = (buildTypeDsl as ExtensionAware).extensions.findByName("exampleDsl")
                 as BuildTypeExtension
@@ -48,3 +56,48 @@ abstract class ExamplePlugin: Plugin<Project> {
         }
     }
 }
+
+abstract class CustomData {
+    abstract val websiteUrl: Property<String?>?
+    abstract val vcsUrl: Property<String?>?
+}
+
+abstract class SiteExtension {
+    abstract val outputDir: RegularFileProperty?
+
+    @get:Nested
+    abstract val customData: CustomData?
+
+    fun customData(action: Action<in CustomData?>) {
+        action.execute(customData)
+    }
+}
+
+abstract class SiteTask: DefaultTask() {
+
+    @TaskAction
+    fun doIt() {
+        val  siteEx = project.extensions.getByName("siteEx") as SiteExtension
+        println("testTask begin")
+        val websiteUrl = siteEx.customData?.websiteUrl?.get()
+        val vcsUrl = siteEx.customData?.vcsUrl?.get()
+        val file = siteEx.outputDir?.get()?.asFile
+        println("websiteUrl: ${websiteUrl}")
+        println("vcsUrl: ${vcsUrl}")
+        println("file: ${file?.toString()}") // projectRoot/app/build/mysite
+    }
+}
+
+// https://docs.gradle.org/7.0.2/userguide/custom_plugins.html
+abstract class SitePlugin: Plugin<Project> {
+
+    override fun apply(project: Project) {
+        project.extensions.create<SiteExtension>("siteEx", SiteExtension::class.java)
+        val testTask = project.tasks.register("testTask", SiteTask::class.java) {
+            println("testTask config")
+        }
+        val task = project.tasks.getByName("preBuild")
+        task.dependsOn(testTask)
+    }
+}
+
